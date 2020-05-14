@@ -1,0 +1,18 @@
+---
+
+- hosts: all
+  become: true
+  tasks:
+    - name: Install jq
+      yum:
+        name: jq
+        state: present
+    - name: Copy binary
+      copy:
+        src: app/main
+        dest: /opt/main
+        mode: '0755'
+    - name: Run the app
+      shell: |
+        aws configure set default.region us-west-2
+        GFGAPP_DB_HOST="{{ postgres_endpoint }}" GFGAPP_DB_PASSWORD=$(aws ssm get-parameter --name gfgdbpassword --with-decrypt | jq -r ".Parameter.Value") nohup /opt/main 1>/dev/null 2>&1 &
